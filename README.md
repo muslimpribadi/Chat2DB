@@ -105,6 +105,25 @@ This fork add CLoudflare Tunnel support and dynamic CORS Filters, use this envir
 | `CHAT2DB_CORS_ALLOWED_ORIGINS` | `null` | Add your CF tunnel domain `sub.domain.com`<br>`CHAT2DB_CORS_ALLOW_CLOUDFLARE_TUNNEL` must set to `true` in order this to work. |
 | `CHAT2DB_SERVER_PORT` | `10825` | Optional, only change this if you know what you're doing |
 
+Use the image in the packages repo `docker pull ghcr.io/muslimpribadi/chat2db:latest`.
+
+```bash
+# Run once from a repository checkout. Re-running reuses the same valid key.
+git clone https://github.com/OtterMind/Chat2DB.git && cd Chat2DB
+./script/security/init-community-encryption-key.sh
+
+docker run --detach \
+  --name chat2db-community \
+  --restart unless-stopped \
+  --publish 127.0.0.1:10825:10825 \
+  --volume "$HOME/.chat2db-community-docker:/root/.chat2db-community" \
+  --env CHAT2DB_COMMUNITY_ENCRYPTION_KEY_FILE=/run/secrets/chat2db-community-encryption.key \
+  --env CHAT2DB_CORS_ALLOW_CLOUDFLARE_TUNNEL=true \
+  --env CHAT2DB_CORS_ALLOWED_ORIGINS=sub.domain.com \
+  --volume "$HOME/.config/chat2db-community/encryption.key:/run/secrets/chat2db-community-encryption.key:ro" \
+  ghcr.io/muslimpribadi/chat2db:latest
+```
+
 ## Security Notes
 
 Chat2DB Community is a single-user, local-first application. It has no user
