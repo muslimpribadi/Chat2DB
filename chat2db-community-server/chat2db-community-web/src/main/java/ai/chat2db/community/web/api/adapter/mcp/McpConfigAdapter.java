@@ -9,6 +9,7 @@ import ai.chat2db.community.web.api.model.http.CookieUtil;
 import com.alibaba.fastjson2.JSONObject;
 import com.alibaba.fastjson2.JSONWriter;
 import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -17,6 +18,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.web.servlet.context.ServletWebServerApplicationContext;
 import org.springframework.core.env.Environment;
+import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
@@ -68,9 +70,87 @@ public class McpConfigAdapter implements IMcpConfigService {
     }
 
     private String resolveBaseUrl() {
-        String scheme = environment.getProperty("server.ssl.enabled", Boolean.class, false) ? "https" : "http";
-        String host = StringUtils.defaultIfBlank(environment.getProperty("server.address"), "127.0.0.1");
+        if (!isDesktopGuiClient()) {
+            ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+            if (attributes != null && attributes.getRequest() != null) {
+                String requestBaseUrl = resolveRequestBaseUrl(attributes.getRequest());
+                if (StringUtils.isNotBlank(requestBaseUrl)) {
+                    return requestBaseUrl;
+                }
+            }
+        }
+        String scheme = environment != null && environment.getProperty("server.ssl.enabled", Boolean.class, false)
+                ? "https"
+                : "http";
+        String rawAddress = environment == null ? null : environment.getProperty("server.address");
+        String host = normalizeBindAddress(rawAddress);
         return scheme + "://" + host + ":" + resolveServerPort();
+    }
+
+    static String resolveRequestBaseUrl(HttpServletRequest request) {
+        if (request == null) {
+            return null;
+        }
+        String scheme = resolveRequestScheme(request);
+        String forwardedHost = firstHeaderToken(request.getHeader("X-Forwarded-Host"));
+        if (StringUtils.isNotBlank(forwardedHost)) {
+            return scheme + "://" + stripDefaultPort(scheme, forwardedHost);
+        }
+        String hostHeader = firstHeaderToken(request.getHeader(HttpHeaders.HOST));
+        if (StringUtils.isNotBlank(hostHeader)) {
+            return scheme + "://" + stripDefaultPort(scheme, hostHeader);
+        }
+        String serverName = request.getServerName();
+        if (StringUtils.isBlank(serverName)) {
+            return null;
+        }
+        int serverPort = request.getServerPort();
+        String authority = serverPort > 0 ? serverName + ":" + serverPort : serverName;
+        return scheme + "://" + stripDefaultPort(scheme, authority);
+    }
+
+    private static String resolveRequestScheme(HttpServletRequest request) {
+        String forwardedProto = firstHeaderToken(request.getHeader("X-Forwarded-Proto"));
+        if ("https".equalsIgnoreCase(forwardedProto) || "http".equalsIgnoreCase(forwardedProto)) {
+            return forwardedProto.toLowerCase();
+        }
+        String cfVisitor = request.getHeader("CF-Visitor");
+        if (StringUtils.containsIgnoreCase(cfVisitor, "\"https\"")) {
+            return "https";
+        }
+        if (request.isSecure() || "https".equalsIgnoreCase(request.getScheme())) {
+            return "https";
+        }
+        return "http";
+    }
+
+    private static String stripDefaultPort(String scheme, String authority) {
+        if ("https".equalsIgnoreCase(scheme) && authority.endsWith(":443")) {
+            return authority.substring(0, authority.length() - 4);
+        }
+        if ("http".equalsIgnoreCase(scheme) && authority.endsWith(":80")) {
+            return authority.substring(0, authority.length() - 3);
+        }
+        return authority;
+    }
+
+    private static String firstHeaderToken(String headerValue) {
+        if (StringUtils.isBlank(headerValue)) {
+            return null;
+        }
+        String first = headerValue.split(",")[0].trim();
+        return first.isEmpty() ? null : first;
+    }
+
+    private static String normalizeBindAddress(String address) {
+        if (StringUtils.isBlank(address)) {
+            return "127.0.0.1";
+        }
+        String trimmed = address.trim();
+        if ("0.0.0.0".equals(trimmed) || "::".equals(trimmed) || "[::]".equals(trimmed) || "0:0:0:0:0:0:0:0".equals(trimmed)) {
+            return "127.0.0.1";
+        }
+        return trimmed;
     }
 
     private Map<String, String> buildHeaders() {

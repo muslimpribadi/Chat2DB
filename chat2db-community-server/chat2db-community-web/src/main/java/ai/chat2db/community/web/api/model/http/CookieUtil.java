@@ -190,20 +190,44 @@ public class CookieUtil {
             Cookie cookie = new Cookie(key, value);
             cookie.setMaxAge(60 * 60 * 24 * 365);
             cookie.setPath("/");
+            boolean secureRequest = isSecureRequest(request);
+            if (secureRequest) {
+                cookie.setSecure(true);
+            }
             String serviceName = request.getServerName();
-            if(StringUtils.isNotBlank(serviceName)){
-                if(serviceName.toLowerCase().contains("chat2db-ai.com")){
+            if (StringUtils.isNotBlank(serviceName)) {
+                if (serviceName.toLowerCase().contains("chat2db-ai.com")) {
                     cookie.setDomain(".chat2db-ai.com");
                     cookie.setSecure(true);
                     sameSite = "None";
-                }else if(serviceName.toLowerCase().contains("chat2db.ai")){
+                } else if (serviceName.toLowerCase().contains("chat2db.ai")) {
                     cookie.setDomain(".chat2db.ai");
                     cookie.setSecure(true);
                     sameSite = "None";
                 }
             }
-            addSameSite(response ,cookie, sameSite);
+            addSameSite(response, cookie, sameSite);
         }
+    }
+
+    static boolean isSecureRequest(HttpServletRequest request) {
+        if (request == null) {
+            return false;
+        }
+        if (request.isSecure() || "https".equalsIgnoreCase(request.getScheme())) {
+            return true;
+        }
+        String forwardedProto = request.getHeader("X-Forwarded-Proto");
+        if (StringUtils.isNotBlank(forwardedProto)
+                && forwardedProto.split(",")[0].trim().equalsIgnoreCase("https")) {
+            return true;
+        }
+        String cfVisitor = request.getHeader("CF-Visitor");
+        if (StringUtils.containsIgnoreCase(cfVisitor, "\"https\"")) {
+            return true;
+        }
+        String forwarded = request.getHeader("Forwarded");
+        return StringUtils.containsIgnoreCase(forwarded, "proto=https");
     }
 
 

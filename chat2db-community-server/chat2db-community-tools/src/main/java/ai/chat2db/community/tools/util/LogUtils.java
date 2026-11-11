@@ -15,8 +15,8 @@ public class LogUtils {
     private static final ThreadLocal<String> TRACE_ID_THREAD_LOCAL = new ThreadLocal<>();
 
 
-    private static final String[] CLIENT_IP_HEADERS = {"X-Forwarded-For", "X-Real-IP", "Proxy-Client-IP",
-        "WL-Proxy-Client-IP", "HTTP_CLIENT_IP", "HTTP_X_FORWARDED_FOR"};
+    private static final String[] CLIENT_IP_HEADERS = {"CF-Connecting-IP", "True-Client-IP", "X-Forwarded-For",
+        "X-Real-IP", "Proxy-Client-IP", "WL-Proxy-Client-IP", "HTTP_CLIENT_IP", "HTTP_X_FORWARDED_FOR"};
 
 
     public static final int MAX_LOG_LENGTH = 20000;

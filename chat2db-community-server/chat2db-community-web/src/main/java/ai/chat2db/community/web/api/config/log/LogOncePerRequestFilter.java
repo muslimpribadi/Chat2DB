@@ -28,11 +28,17 @@ public class LogOncePerRequestFilter extends OncePerRequestFilter {
             if (StringUtils.isBlank(MDC.get(LogUtils.TRACE_ID))) {
                 MDC.put(LogUtils.TRACE_ID, LogUtils.generateTraceId());
             }
-            String clientIp = request.getHeader("X-Real-IP");
-            if (clientIp == null) {
+            String clientIp = request.getHeader("CF-Connecting-IP");
+            if (StringUtils.isBlank(clientIp)) {
+                clientIp = request.getHeader("True-Client-IP");
+            }
+            if (StringUtils.isBlank(clientIp)) {
+                clientIp = request.getHeader("X-Real-IP");
+            }
+            if (StringUtils.isBlank(clientIp)) {
                 clientIp = request.getHeader("X-Forwarded-For");
             }
-            if (clientIp == null) {
+            if (StringUtils.isBlank(clientIp)) {
                 clientIp = request.getRemoteAddr();
             }
             MDC.put(LogUtils.CLIENT_IP, clientIp);

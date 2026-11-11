@@ -52,8 +52,9 @@ class HTTPSRequestClass {
     transformStream?: SSEStreamProps<Output>['transformStream'],
   ): SSERequestHandle => {
     return createAbortableRequestHandle(async (signal) => {
-      const requestInit = {
+      const requestInit: RequestInit = {
         method: 'POST',
+        credentials: 'include',
         headers: this.defaultHeaders,
         body: JSON.stringify({
           model: this.model,

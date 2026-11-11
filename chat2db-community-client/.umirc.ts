@@ -11,6 +11,12 @@ const yarnConfig = extractYarnConfig(process.argv);
 const isDevelopment = process.env.NODE_ENV === 'development';
 const publicPath = yarnConfig.public_path || process.env.UMI_PublicPath || (isDevelopment ? '/' : './');
 const assetPublicPath = publicPath.endsWith('/') ? publicPath : `${publicPath}/`;
+const envServerPort = process.env.CHAT2DB_SERVER_PORT || process.env.APP_PORT;
+const resolvedProxyTarget =
+  yarnConfig.proxy_target ||
+  process.env.CHAT2DB_PROXY_TARGET ||
+  (envServerPort ? `http://127.0.0.1:${envServerPort}` : undefined) ||
+  communityProductConfig.defaultProxyTarget;
 const storageKeys = STORAGE_STORE_NAMES.map(
   (storeName) => `${communityProductConfig.storageKeyPrefix}${storeName}_Store`,
 );
@@ -77,7 +83,7 @@ export default defineConfig({
   },
   proxy: {
     '/api': {
-      target: yarnConfig.proxy_target || communityProductConfig.defaultProxyTarget,
+      target: resolvedProxyTarget,
       secure: false,
       changeOrigin: true,
       proxyTimeout: 0,

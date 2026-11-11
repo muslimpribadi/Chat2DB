@@ -4,9 +4,12 @@ services:
     container_name: chat2db-community
     restart: unless-stopped
     ports:
-      - "${CHAT2DB_BIND_ADDRESS:-127.0.0.1}:${CHAT2DB_PORT:-10825}:10825"
+      - "${CHAT2DB_BIND_ADDRESS:-127.0.0.1}:${CHAT2DB_PORT:-10825}:${CHAT2DB_SERVER_PORT:-10825}"
     environment:
       CHAT2DB_COMMUNITY_ENCRYPTION_KEY_FILE: /run/secrets/chat2db-community-encryption.key
+      CHAT2DB_SERVER_PORT: ${CHAT2DB_SERVER_PORT:-10825}
+      CHAT2DB_CORS_ALLOWED_ORIGINS: ${CHAT2DB_CORS_ALLOWED_ORIGINS:-}
+      CHAT2DB_CORS_ALLOW_CLOUDFLARE_TUNNEL: ${CHAT2DB_CORS_ALLOW_CLOUDFLARE_TUNNEL:-true}
     volumes:
       - chat2db-community-data:/root/.chat2db-community
       - "${HOME}/.config/chat2db-community/encryption.key:/run/secrets/chat2db-community-encryption.key:ro"
