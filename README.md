@@ -1,3 +1,6 @@
+> [!NOTE]
+> *See [Option 3: Docker/ Podman + Cloudflare Support](#option-3) for this fork features!*
+
 <div align="center">
   <img src="./icon.png" alt="Chat2DB" width="100">
   <div align="center">
@@ -90,6 +93,17 @@ Notes:
 - To update, pull the new image, remove the old container, and run the start command again. Keep `~/.config/chat2db-community/encryption.key` across rebuilds.
 - The `docker run` example stores application data in `$HOME/.chat2db-community-docker`; the Compose definition uses the `chat2db-community-data` named volume. These locations do not share data.
 - Chat2DB Community 5.3.0 uses the independent `/root/.chat2db-community` directory and does not automatically migrate data from earlier images that used `/root/.chat2db`.
+
+<a id="option-3"></a>
+### Option 3: Docker/Podman + Cloudflare Tunnel (🗨️Fork Notes)
+
+This fork add CLoudflare Tunnel support and dynamic CORS Filters, use this environment variable:
+
+| Env. | Default | Notes |
+| --- | --- | --- |
+| `CHAT2DB_CORS_ALLOW_CLOUDFLARE_TUNNEL` | `false` | Set to true to enable CF tunnel support |
+| `CHAT2DB_CORS_ALLOWED_ORIGINS` | `null` | Add your CF tunnel domain `sub.domain.com`<br>`CHAT2DB_CORS_ALLOW_CLOUDFLARE_TUNNEL` must set to `true` in order this to work. |
+| `CHAT2DB_SERVER_PORT` | `10825` | Optional, only change this if you know what you're doing |
 
 ## Security Notes
 
